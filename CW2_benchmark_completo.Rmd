@@ -1,0 +1,232 @@
+---
+title: "ECG data. 2 clusters. Todos los metodos"
+author: "Belén Pulido"
+date: "21/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r functions, echo=FALSE,warning=FALSE, message=FALSE}
+library(roahd)
+#source("G:/Mi unidad/Doctorado/Curso1/code_paper_sin_restriccion_final_contador.R")
+#source("G:/Mi unidad/Doctorado/Curso1/code_paper_sin_restriccion_final_contador_mult.R")
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/code_paper_sin_restriccion_final_contador_mult.R")
+create_grid_X <- function(X,t,nbasis,norder,clus,Type){
+  #MIRAR SI CONVIENE PONER X EN VEZ DE NSIM PARA PODER USARLA EN CUALQUIER DATASET REAL (pasar X como param)
+  #X <- datos_sim(nsim)
+  clust1 <- clustInd_svc(X,t,c(min(t),max(t)),as.integer(nbasis),cluster.method="kmeans", as.integer(norder),as.integer(clus),true_labels=Type)
+  clasif1 <- clust1$val_indices
+  t1 <- clust1$time
+  clust2 <- clustInd_svc(X,t,c(min(t),max(t)),as.integer(nbasis),cluster.method="mlKmeans", as.integer(norder),as.integer(clus),true_labels=Type)
+  clasif2 <- clust2$val_indices
+  t2 <- clust2$time
+  clust3 <- clustInd_kkmeans(X,t,c(min(t),max(t)),as.integer(nbasis),kernel="rbfdot", as.integer(norder),as.integer(clus),true_labels=Type)
+  clasif3 <- clust3$val_indices
+  t3 <- clust3$time
+  clust4 <- clustInd_kkmeans(X,t,c(min(t),max(t)),as.integer(nbasis),kernel="polydot", as.integer(norder),as.integer(clus),true_labels=Type)
+  clasif4 <- clust4$val_indices
+  t4 <- clust4$time
+  clust5 <- clustInd_spc(X,t,c(min(t),max(t)),as.integer(nbasis), as.integer(norder),as.integer(clus),true_labels=Type)
+  clasif5 <- clust5$val_indices
+  t5 <- clust5$time
+  clust6 <- clustInd_hierarch(X,t,c(min(t),max(t)),as.integer(nbasis),as.integer(norder),"euclidean",as.integer(clus),true_labels=Type)
+  clasif6 <- clust6$val_indices
+  t6 <- clust6$time
+  clust7 <- clustInd_kmeans(X,t,c(min(t),max(t)),as.integer(nbasis),as.integer(norder),"euclidean",as.integer(clus),true_labels=Type)
+  clasif7 <- clust7$val_indices
+  t7 <- clust7$time
+  clust8 <- clustInd_kmeans(X,t,c(min(t),max(t)),as.integer(nbasis),as.integer(norder),"mahalanobis",as.integer(clus),true_labels=Type)
+  clasif8 <- clust8$val_indices
+  t8 <- clust8$time
+  
+  clasif1 <- rbind(clasif1,clasif2,clasif3,clasif4,clasif5,clasif6,clasif7,clasif8)
+  names <- row.names(clasif1)
+  time <- rbind(t1,t2,t3,t4,t5,t6,t7,t8)
+  Iter <- rep(1,dim(clasif1)[1])
+  clasif <- data.frame(cbind(names,clasif1,time,Iter))
+  row.names(clasif)<-c()
+  res <- clasif[order(clasif$RI,decreasing = TRUE),]
+  return(res)
+}
+
+scale_data <- function(data, scale_method = "0,1") {
+  if (scale_method == "0,1") {
+    #### Scale the data in the [0,1] interval and separate train and test ####
+    
+    maxs <- apply(data, 2, max) # obtain the max of each variable
+    mins <- apply(data, 2, min) # obtain the min of each variable
+    output <- as.data.frame(scale(data, center = mins, scale = maxs - mins))
+  } else if (scale_method == "-1,1") {
+    #### Scale the data in the [-1,1] interval ####
+    
+    maxs <- apply(data, 2, max) # obtain the max of each variable
+    mins <- apply(data, 2, min) # obtain the min of each variable
+    output <- as.data.frame(scale(data, center = mins + (maxs - mins) / 2, scale = (maxs - mins) / 2))
+  } else if (scale_method == "standardize") {
+    #### Scale the data to have mean=0 and sd=1 and separate train and test ####
+    
+    output <- as.data.frame(scale(data, center = TRUE, scale = TRUE))
+  } else {
+    print("Non valid method")
+    output <- "Non valid method"
+  }
+  
+  return(output)
+}
+```
+
+
+### ECG data
+
+```{r sim_martino mult, echo=FALSE, message=FALSE, warning=FALSE, results=FALSE}
+library(fda)
+rgns = 1:4
+names(rgns) = c("Arctic","Atlantic","Continental","Pacific")
+Rgns = rgns[CanadianWeather$region]
+true_labels <- as.numeric(Rgns)
+temp = CanadianWeather$dailyAv[,,"Temperature.C"]
+prec = CanadianWeather$dailyAv[,,"Precipitation.mm"]
+# Scale data
+#temp_sc <- scale_data(temp,scale_method = "standardize")
+#prec_sc <- scale_data(prec,scale_method = "standardize")
+
+t <- seq(1,365,length=dim(temp)[1])
+
+datos <- array(dim=c(35,365,2))
+# datos[,,1] <- t(temp_sc)
+# datos[,,2] <- t(prec_sc)
+datos[,,1] <- t(temp)
+datos[,,2] <- t(prec)
+
+p_v <- c(10^(-3),0.02,1,100,10^8)
+```
+
+## Model 1. Our indexes
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,results=FALSE}
+set.seed(1)
+sfs1 <- create_grid_X(datos, t, 30, 4, 2, true_labels)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+print(xtable(sfs1,digits=5))
+table(sfs1$Iter)
+```
+
+## Model 1. Romo's indexes
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE, results=FALSE}
+ind <- function(X,t,rangeval=c(0,1),nbasis=40,norder=4){
+
+  # Applying the indexes calculated in the roahd way
+
+  # INPUT
+  # X <- functional data object containing the different groups that can be originally observed
+  #      (1 to x rows correspond to the observations for the first group, x+1 to y correspond to the second group and so on)
+  # t <- sequence for creating the basis
+  # rangeval <- a numeric vector of length 2 defining the interval over which the
+  #             functional data object can be evaluated. By default, we consider the interval [0,1]
+  # nbasis <- number of basis functions --- PARAMETRO QUE NO ESTOY USANDO AHORA
+  # norder <- order of b-splines
+
+  basisobj <- create.bspline.basis(rangeval=rangeval,norder=norder) #b-spline basis (order 3 polynomials when norder = 4)
+
+  dta <- X #original data
+
+  if(length(dim(X))==3){
+    # Multivariate functional data
+
+    N <- dim(X)[1]
+    P <- dim(X)[2]
+    K <- dim(X)[3]
+
+    ddta <- array(rep(NaN,N*P),dim=c(N,P,K))
+    d2dta <- array(rep(NaN,N*P),dim=c(N,P,K))
+    for(k in 1:K){
+      dta_funspline <- funspline(X[,,k],t,basisobj)
+      ddta[,,k] <- dta_funspline$deriv #first derivative
+      d2dta[,,k] <- dta_funspline$deriv2 #second derivative
+    }
+    # Applying the indexes to the origial data
+    dtaEI <- rowMeans(apply(dta,3,EI))
+    dtaHI <- rowMeans(apply(dta,3,HI))
+    dtaMEI <- rowMeans(apply(dta,3,MEI))
+    dtaMHI <- rowMeans(apply(dta,3,MHI))
+
+    # Applying the indexes to the data first derivatives
+    ddtaEI <- rowMeans(apply(ddta,3,EI))
+    ddtaHI <- rowMeans(apply(ddta,3,HI))
+    ddtaMEI <- rowMeans(apply(ddta,3,MEI))
+    ddtaMHI <- rowMeans(apply(ddta,3,MHI))
+
+    # Applying the indexes to the data second derivatives
+    d2dtaEI <- rowMeans(apply(d2dta,3,EI))
+    d2dtaHI <- rowMeans(apply(d2dta,3,HI))
+    d2dtaMEI <- rowMeans(apply(d2dta,3,MEI))
+    d2dtaMHI <- rowMeans(apply(d2dta,3,MHI))
+  }else{
+    stop("The given data must be a three dimensional array")
+  }
+
+  # New multivariate data set
+  ind.data <- data.frame(dtaEI,dtaHI,dtaMEI,dtaMHI,ddtaEI,ddtaHI,ddtaMEI,
+                         ddtaMHI,d2dtaEI,d2dtaHI,d2dtaMEI,d2dtaMHI)
+  return(ind.data)
+}
+
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE,results=FALSE}
+set.seed(1)
+sfs1 <- create_grid_X(datos, t, 30, 4, 2, true_labels)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+print(xtable(sfs1,digits=5))
+table(sfs1$Iter)
+```
+
+<!-- ## First approach. funkmeans (Martino) -->
+
+<!-- ```{r, echo=FALSE,warning=FALSE} -->
+<!-- source("G:/Mi unidad/Doctorado/Curso1/Metodos_comparacion_clustering/functions_martino_zambom_delete.R") -->
+<!-- set.seed(1) -->
+<!-- sfs1 <- fun_kmeans_rep(29,t,p_v=p_v,clus=2,true_labels = true_labels,k=3, r=100) -->
+<!-- print(xtable(sfs1,digits=5)) -->
+<!-- ``` -->
+
+```{r, echo=FALSE,warning=FALSE, results=FALSE}
+source("G:/Mi unidad/Doctorado/Curso2/Multivariate_clustering/benchmark_amandine/benchmark_multivariate_clustering.R")
+nbasis <-30
+norder <- 4
+```
+
+## Second approach. Funclustering
+
+```{r, echo=FALSE,warning=FALSE}
+set.seed(1)
+sfs2 <- fun_funclustering_X(datos,t,norder,nbasis,clus=2,true_labels)
+print(sfs2,digits=5)
+```
+
+## Third approach. funHDDC
+
+```{r, echo=FALSE,warning=FALSE}
+set.seed(1)
+sfs3 <- fun_HDDC_X(datos,t,norder,nbasis,clus=2,true_labels)
+print(sfs3,digits=5)
+```
+
+## Fourth approach. fgrc
+
+```{r, echo=FALSE,warning=FALSE}
+set.seed(1)
+sfs4 <- fun_FGRC_X(datos,t,norder,nbasis,clus=2,true_labels)
+print(sfs4,digits=5)
+```
+

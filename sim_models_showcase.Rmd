@@ -1,0 +1,2789 @@
+---
+title: "My New Multivariate Sim Models"
+author: "Oluwasegun"
+date: "05/02/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=F, message=F, warning=FALSE,
+                      fig.align='center',
+                      fig.width=20, fig.height=5)
+```
+
+```{r, load-libraries, include=F}
+source("simulator_eigen2.R")
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+#library(RandomFields)
+#library(scatterplot3d)
+```
+
+# Model 0
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+set.seed(122)
+ssm0_0 <- multimodel0_0()
+
+dt1 <- ssm0_0[[1]]@X; dt2 <- ssm0_0[[2]]@X; dt3 <- ssm0_0[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = dtplot1,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylim(-5, 10) +
+  ylab("X(t)")+
+  theme_bw() 
+
+p2 <- ggplot() +
+  geom_line(data = dtplot2,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylim(-5, 10) +
+  ylab("X(t)")+
+  theme_bw() 
+
+p3 <- ggplot() +
+  geom_line(data = dtplot3,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylim(-5, 10) +
+  ylab("X(t)")+
+  theme_bw() 
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+
+## Second Variant
+
+```{r}
+ssm0_1 <- multimodel0_1()
+
+dt1 <- ssm0_1[[1]]@X; dt2 <- ssm0_1[[2]]@X; dt3 <- ssm0_1[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = dtplot1,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw() 
+
+p2 <- ggplot() +
+  geom_line(data = dtplot2,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw() 
+
+p3 <- ggplot() +
+  geom_line(data = dtplot3,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw() 
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+
+
+# Model 1
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+set.seed(145)
+ssm <- multimodel1(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel1(n_outliers = 10, specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel1(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-20, 20) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+
+
+# Model 2
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel2(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+# p1 <- ggplot() +
+#   geom_line(data = dtplot1,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#   ylim(-14, 17) +
+#   ylab("X(t)")+
+#   theme_bw() 
+# 
+# p2 <- ggplot() +
+#   geom_line(data = dtplot2,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#   ylim(-14, 17) +
+#   ylab("X(t)")+
+#   theme_bw() 
+# 
+# p3 <- ggplot() +
+#   geom_line(data = dtplot3,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#  
+#   ylab("X(t)")+
+#   theme_bw() 
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel2(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+# p1 <- ggplot() +
+#   geom_line(data = dtplot1,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#   ylim(-14, 17) +
+#   ylab("X(t)")+
+#   theme_bw() 
+# 
+# p2 <- ggplot() +
+#   geom_line(data = dtplot2,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#   ylim(-14, 17) +
+#   ylab("X(t)")+
+#   theme_bw() 
+# 
+# p3 <- ggplot() +
+#   geom_line(data = dtplot3,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#  
+#   ylab("X(t)")+
+#   theme_bw() 
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel2(n_outliers = 10, specialp = c(1))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+# p1 <- ggplot() +
+#   geom_line(data = dtplot1,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#   ylim(-14, 17) +
+#   ylab("X(t)")+
+#   theme_bw() 
+# 
+# p2 <- ggplot() +
+#   geom_line(data = dtplot2,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#   ylim(-14, 17) +
+#   ylab("X(t)")+
+#   theme_bw() 
+# 
+# p3 <- ggplot() +
+#   geom_line(data = dtplot3,
+#             aes(x = t,  y = value, group = key),
+#             color = 8, size = .3) +
+#  
+#   ylab("X(t)")+
+#   theme_bw() 
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-14, 17) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+# Model 3
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel3(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-15, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-15, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-15, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel3(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-15, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-15, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-15, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel3(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-16, 16) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-16, 16) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-16, 16) +
+  ylab("X(t)")+
+  theme_bw()
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+# Model 4
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel4(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel4(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel4(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 16) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 16) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 16) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+# Model 5
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel5(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5, eval=T}
+ssm <- multimodel5(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel5(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fourth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel5(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fifth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel5(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+   ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+# Model 6
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel6(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5, eval=T}
+ssm <- multimodel6(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel6(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fourth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel6(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fifth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel6(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-10, 11) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+# Model 7
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel7(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5, eval=T}
+ssm <- multimodel7(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel7(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fourth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel7(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fifth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel7(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-10, 10) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+# Model 8
+
+## First Variant
+```{r, fig.width=20, fig.height=5}
+ssm <- multimodel8(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5, eval=T}
+ssm <- multimodel8(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel8(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fourth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel8(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fifth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel8(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-30, 30) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+
+# Model 9
+
+## First Variant
+```{r, fig.width=20, fig.height=5, eval=T}
+ssm <- multimodel9(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Second Variant
+```{r, fig.width=20, fig.height=5, eval=T}
+ssm <- multimodel9(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+ ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Third Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel9(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fourth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel9(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```
+## Fifth Variant
+```{r, fig.width=20, fig.height=5, eval = T}
+ssm <- multimodel9(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+dt1 <- as.data.frame(t(dt1))
+dt2 <- as.data.frame(t(dt2))
+dt3 <- as.data.frame(t(dt3))
+
+dt1$t <- seq(0,1, length.out = 50)
+dt2$t <- seq(0,1, length.out = 50)
+dt3$t <- seq(0,1, length.out = 50)
+
+out <-  rep(0, 100)
+out[1:10] <- 1
+
+dtplot1 <- dt1 %>% gather(key = "key", value = "value", -t)
+dtplot1$outlier <-  factor(rep(out, each = 50), levels = c(1, 0),
+                       labels = c("outlier", "normal"))
+
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$outlier <- dtplot1$outlier
+
+dtplot3 <- dt3 %>% gather(key = "key", value = "value", -t)
+dtplot3$outlier <- dtplot1$outlier
+
+dtplot1$key <- factor(dtplot1$key)
+dtplot2$key <- factor(dtplot2$key)
+dtplot3$key <- factor(dtplot3$key)
+
+
+p1 <- ggplot() +
+  geom_line(data = filter(dtplot1, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot1, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p2 <- ggplot() +
+  geom_line(data = filter(dtplot2, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot2, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+p3 <- ggplot() +
+  geom_line(data = filter(dtplot3, outlier == "normal"),
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  geom_line(data = filter(dtplot3, outlier == "outlier"),
+            aes(x = t,  y = value, group = key),
+            color = "#D55E00", size = .7) +
+  ylim(-20, 15) +
+  ylab("X(t)")+
+  theme_bw()
+
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+
+```

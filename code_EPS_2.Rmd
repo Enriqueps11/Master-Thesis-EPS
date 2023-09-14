@@ -1,0 +1,1182 @@
+---
+title: "TFM_2"
+author: "Enrique Perez"
+date: "2023-04-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(fda)
+library(roahd)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(graphics)
+```
+
+```{r}
+scale_data <- function(data, scale_method = "0,1") {
+  if (scale_method == "0,1") {
+    #### Scale the data in the [0,1] interval and separate train and test ####
+    
+    maxs <- apply(data, 2, max) # obtain the max of each variable
+    mins <- apply(data, 2, min) # obtain the min of each variable
+    output <- as.data.frame(scale(data, center = mins, scale = maxs - mins))
+  } else if (scale_method == "-1,1") {
+    #### Scale the data in the [-1,1] interval ####
+    
+    maxs <- apply(data, 2, max) # obtain the max of each variable
+    mins <- apply(data, 2, min) # obtain the min of each variable
+    output <- as.data.frame(scale(data, center = mins + (maxs - mins) / 2, scale = (maxs - mins) / 2))
+  } else if (scale_method == "standardize") {
+    #### Scale the data to have mean=0 and sd=1 and separate train and test ####
+    
+    output <- as.data.frame(scale(data, center = TRUE, scale = TRUE))
+  } else {
+    print("Non valid method")
+    output <- "Non valid method"
+  }
+  
+  return(output)
+}
+```
+
+
+```{r}
+#Call to the codes to obtain the indexes and to create the functional multivariate boxplot
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/indexes.R")
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/fmboxplot.R")
+#Call to the code that simulates the data
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/datos_multivariantes_simulados/simulation_model_workshop_Belen/simulator_eigen2.R")
+
+```
+
+
+# ######################################## #
+#  PARTE DEL CÓDIGO DE BELÉN QUE ME SIRVE  #
+# ######################################## #
+
+### ECG data
+
+```{r}
+temp = CanadianWeather$dailyAv[,,"Temperature.C"]
+prec = CanadianWeather$dailyAv[,,"Precipitation.mm"]
+# Scale data
+temp_sc <- scale_data(temp,scale_method = "standardize")
+prec_sc <- scale_data(prec,scale_method = "standardize")
+
+t <- seq(1,365,length=dim(temp)[1])
+
+datos <- array(dim=c(35,365,2))
+ datos[,,1] <- t(temp_sc)
+ datos[,,2] <- t(prec_sc)
+#datos[,,1] <- t(temp)
+#datos[,,2] <- t(prec)
+```
+
+
+# MAIN FUNCTION
+
+```{r, warning=FALSE}
+rangeval <- c(min(t),max(t))
+nbasis <- 30
+norder <- 4
+#Run the fmboxplot function on our data
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+gridExtra::grid.arrange(p1,p2, nrow = 1)
+```
+
+```{r}
+res<-fmboxplot_i(prec_sc, t, rangeval, nbasis, norder)
+(plot<-res$plot)
+```
+
+```{r}
+res<-fmboxplot_i(temp_sc, t, rangeval, nbasis, norder)
+(plot<-res$plot)
+```
+
+
+# SIMULATIONS
+
+## Model 0
+
+### First variant
+
+```{r}
+set.seed(122)
+t <- seq(0,1, length.out = 50)
+rangeval <- c(min(t),max(t))
+nbasis <- 30
+norder <- 4
+
+ssm0_0 <- multimodel0_0()
+
+dt1 <- ssm0_0[[1]]@X; dt2 <- ssm0_0[[2]]@X; dt3 <- ssm0_0[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+
+```
+
+### Second variant
+
+```{r}
+ssm0_1 <- multimodel0_1()
+
+dt1 <- ssm0_1[[1]]@X; dt2 <- ssm0_1[[2]]@X; dt3 <- ssm0_1[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 1
+
+### First variant
+
+```{r}
+set.seed(145)
+ssm <- multimodel1(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X;
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+```{r}
+real_outliers<-c(1:10)
+correct<-0
+for (i in outliers) {
+  if(i %in% real_outliers){correct<-correct+1}
+}
+(TPR<-correct/length(real_outliers)) # Porcentaje de acierto
+(FPR<-(length(outliers)-correct)/length(outliers)) #Porcentaje false positives
+correct<-0
+for (i in out1) {
+  if(i %in% real_outliers){correct<-correct+1}
+}
+(TPR1<-correct/length(real_outliers)) 
+(FPR1<-(length(out1)-correct)/length(out1)) 
+correct<-0
+for (i in out2) {
+  if(i %in% real_outliers){correct<-correct+1}
+}
+(TPR<-correct/length(real_outliers))
+(FPR<-(length(out2)-correct)/length(out2)) 
+correct<-0
+for (i in out3) {
+  if(i %in% real_outliers){correct<-correct+1}
+}
+(TPR<-correct/length(real_outliers))
+(FPR<-(length(out3)-correct)/length(out3))
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel1(n_outliers = 10, specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel1(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X;  
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 2
+
+### First variant
+
+```{r}
+ssm <- multimodel2(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel2(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X;  
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel2(n_outliers = 10, specialp = c(1))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 3
+
+### First variant
+
+```{r}
+ssm <- multimodel3(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X;  
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel3(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel3(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 4
+
+### First variant
+
+```{r}
+ssm <- multimodel4(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel4(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel4(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 5
+
+### First variant
+
+```{r}
+ssm <- multimodel5(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel5(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel5(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X;
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fourth Variant
+
+```{r}
+ssm <- multimodel5(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fifth Variant
+
+```{r}
+ssm <- multimodel5(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 6
+
+### First variant
+
+```{r}
+ssm <- multimodel6(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel6(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel6(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fourth variant
+
+```{r}
+ssm <- multimodel6(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fifth variant
+
+```{r}
+ssm <- multimodel6(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 7
+
+### First variant
+
+```{r}
+ssm <- multimodel7(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel7(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel7(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fourth variant
+
+```{r}
+ssm <- multimodel7(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fifth variant
+
+```{r}
+ssm <- multimodel7(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 8
+
+### First variant
+
+```{r}
+ssm <- multimodel8(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel8(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel8(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fourth variant
+
+```{r}
+ssm <- multimodel8(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fifth variant
+
+```{r}
+ssm <- multimodel8(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+## Model 9
+
+### First variant
+
+```{r}
+ssm <- multimodel9(n_outliers = 10)
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Second variant
+
+```{r}
+ssm <- multimodel9(n_outliers = 10,
+                   specialp = c(1,3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Third variant
+
+```{r}
+ssm <- multimodel9(n_outliers = 10, specialp = c(3))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fourth variant
+
+```{r}
+ssm <- multimodel9(n_outliers = 10, specialp = c(2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+### Fifth variant
+
+```{r}
+ssm <- multimodel9(n_outliers = 10, specialp = c(1,2))
+
+dt1 <- ssm[[1]]@X; dt2 <- ssm[[2]]@X; dt3 <- ssm[[3]]@X; 
+
+datos <- array(dim=c(100,50,3))
+datos[,,1]<-dt1
+datos[,,2]<-dt2
+datos[,,3]<-dt3
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p2<-fmboxplot(2,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+p3<-fmboxplot(3,pa$results,pa$pq1,pa$pq3,pa$pw1,pa$pw3,pa$outliers)
+outliers<-pa$outliers
+r1<-fmboxplot_i(t(dt1), t, rangeval, nbasis, norder)
+p1_i<-r1$plot ; out1<-r1$outliers
+r2<-fmboxplot_i(t(dt2), t, rangeval, nbasis, norder)
+p2_i<-r2$plot ; out2<-r2$outliers
+r3<-fmboxplot_i(t(dt3), t, rangeval, nbasis, norder)
+p3_i<-r3$plot ; out3<-r3$outliers
+
+gridExtra::grid.arrange(p1,p2,p3,p1_i, p2_i, p3_i, nrow = 2)
+```
+
+

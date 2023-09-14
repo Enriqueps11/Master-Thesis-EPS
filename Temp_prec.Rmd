@@ -1,0 +1,169 @@
+---
+title: "Temp_prec"
+author: "Enrique Perez"
+date: "2023-07-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(fda)
+library(roahd)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(graphics)
+library(kableExtra)
+```
+
+```{r}
+scale_data <- function(data, scale_method = "0,1") {
+  if (scale_method == "0,1") {
+    #### Scale the data in the [0,1] interval and separate train and test ####
+    
+    maxs <- apply(data, 2, max) # obtain the max of each variable
+    mins <- apply(data, 2, min) # obtain the min of each variable
+    output <- as.data.frame(scale(data, center = mins, scale = maxs - mins))
+  } else if (scale_method == "-1,1") {
+    #### Scale the data in the [-1,1] interval ####
+    
+    maxs <- apply(data, 2, max) # obtain the max of each variable
+    mins <- apply(data, 2, min) # obtain the min of each variable
+    output <- as.data.frame(scale(data, center = mins + (maxs - mins) / 2, scale = (maxs - mins) / 2))
+  } else if (scale_method == "standardize") {
+    #### Scale the data to have mean=0 and sd=1 and separate train and test ####
+    
+    output <- as.data.frame(scale(data, center = TRUE, scale = TRUE))
+  } else {
+    print("Non valid method")
+    output <- "Non valid method"
+  }
+  
+  return(output)
+}
+```
+
+
+```{r}
+#Call to the codes to obtain the indexes and to create the functional multivariate boxplot
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/indexes.R")
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/fmboxplot_2.R")
+#Call to the code that simulates the data
+source("C:/Users/enriq/Desktop/UNIVERSIDAD/Máster en Big Data/TFM/Code/datos_multivariantes_simulados/simulation_model_workshop_Belen/simulator_eigen2.R")
+
+```
+
+
+### ECG data
+
+```{r}
+temp = CanadianWeather$dailyAv[,,"Temperature.C"]
+prec = CanadianWeather$dailyAv[,,"Precipitation.mm"]
+# Scale data
+temp_sc <- scale_data(temp,scale_method = "standardize")
+prec_sc <- scale_data(prec,scale_method = "standardize")
+
+t <- seq(1,365,length=dim(temp)[1])
+
+datos <- array(dim=c(35,365,2))
+ #datos[,,1] <- t(temp_sc)
+ #datos[,,2] <- t(prec_sc)
+datos[,,1] <- t(temp)
+datos[,,2] <- t(prec)
+```
+
+```{r}
+dt <- as.data.frame(prec)
+dt$t <- seq(0,1, length.out = 365)
+dtplot <- dt %>% gather(key = "key", value = "value", -t)
+dtplot$key <- factor(dtplot$key)
+p1 <- ggplot() +
+  geom_line(data = dtplot,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylab("X(t)")+
+  theme_bw()
+dt2 <- as.data.frame(prec_sc)
+dt2$t <- seq(0,1, length.out = 365)
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$key <- factor(dtplot2$key)
+p2 <- ggplot() +
+  geom_line(data = dtplot2,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylab("X(t)")+
+  theme_bw()
+```
+
+```{r}
+dt <- as.data.frame(temp)
+dt$t <- seq(0,1, length.out = 365)
+dtplot <- dt %>% gather(key = "key", value = "value", -t)
+dtplot$key <- factor(dtplot$key)
+p3 <- ggplot() +
+  geom_line(data = dtplot,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylab("X(t)")+
+  theme_bw()
+dt2 <- as.data.frame(temp_sc)
+dt2$t <- seq(0,1, length.out = 365)
+dtplot2 <- dt2 %>% gather(key = "key", value = "value", -t)
+dtplot2$key <- factor(dtplot2$key)
+p4 <- ggplot() +
+  geom_line(data = dtplot2,
+            aes(x = t,  y = value, group = key),
+            color = 8, size = .3) +
+  ylab("X(t)")+
+  theme_bw()
+gridExtra::grid.arrange(p1,p2,p3,p4, nrow = 2)
+```
+
+# MAIN FUNCTION
+
+```{r}
+rangeval <- c(min(t),max(t))
+nbasis <- 30
+norder <- 4
+#Run the fmboxplot function on our data
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$q1,pa$q3,pa$w1,pa$w3,pa$sdata,pa$outliers)
+p2<-fmboxplot(2,pa$q1,pa$q3,pa$w1,pa$w3,pa$sdata,pa$outliers)
+outliers_i<-c()
+res1<-fmboxplot_i(t(temp), t, rangeval, nbasis, norder)
+for (i in res1$outliers){if(!is.element(i,outliers_i)){outliers_i<-c(outliers_i,i)}}
+res2<-fmboxplot_i(t(prec), t, rangeval, nbasis, norder)
+for (i in res2$outliers){if(!is.element(i,outliers_i)){outliers_i<-c(outliers_i,i)}}
+gridExtra::grid.arrange(p1,p2,res1$plot,res2$plot, nrow = 2)
+```
+
+```{r}
+gridExtra::grid.arrange(p1,p2, nrow = 1)
+```
+
+
+## Escalado
+
+```{r}
+datos2 <- array(dim=c(35,365,2))
+datos2[,,1] <- t(temp_sc)
+datos2[,,2] <- t(prec_sc)
+#Run the fmboxplot function on our data
+pa<-param(datos, t, rangeval, nbasis, norder)
+p1<-fmboxplot(1,pa$q1,pa$q3,pa$w1,pa$w3,pa$sdata,pa$outliers)
+p2<-fmboxplot(2,pa$q1,pa$q3,pa$w1,pa$w3,pa$sdata,pa$outliers)
+outliers_i<-c()
+res1<-fmboxplot_i(t(temp_sc), t, rangeval, nbasis, norder)
+for (i in res1$outliers){if(!is.element(i,outliers_i)){outliers_i<-c(outliers_i,i)}}
+res2<-fmboxplot_i(t(prec_sc), t, rangeval, nbasis, norder)
+for (i in res2$outliers){if(!is.element(i,outliers_i)){outliers_i<-c(outliers_i,i)}}
+gridExtra::grid.arrange(p1,p2,res1$plot,res2$plot, nrow = 2)
+```
+
+```{r}
+p1
+```
+
